@@ -1,7 +1,7 @@
 use clap::Parser;
 use futures::executor::block_on;
 use rand::prelude::*;
-use rusoto_core::{Region, RusotoError};
+use rusoto_core::{Region, RusotoError, credential::DefaultCredentialsProvider};
 use rusoto_s3::{GetObjectRequest, ListObjectsV2Request, PutObjectRequest, S3Client, S3};
 use std::{str::FromStr, sync::Arc, time::Instant};
 use tokio::io::AsyncReadExt;
@@ -62,7 +62,14 @@ async fn main() {
 
     let verbose = args.verbose;
 
-    let s3 = S3Client::new(Region::from_str(endpoint.as_str()).unwrap());
+    let region = Region::from_str(endpoint.as_str()).unwrap();
+    let credentials = DefaultCredentialsProvider::new().unwrap();
+    let s3 = S3Client::new_with(
+        rusoto_core::request::HttpClient::new().unwrap(),
+        credentials,
+        region,
+    );
+    // let s3 = S3Client::new(Region::from_str(endpoint.as_str()).unwrap());
 
     let stats_vec = Arc::new(std::sync::Mutex::new(Vec::new()));
 
